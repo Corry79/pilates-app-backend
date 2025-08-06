@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Clienti Pilates</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Gestione Clienti Pilates</h1>
+
+    <!-- Form per aggiungere un nuovo cliente -->
+    <div>
+        <h2>Aggiungi Cliente</h2>
+
+        <label for="name">Nome: </label>
+        <input type="text" id="name" required><br>
+
+        <label for="email">Email: </label>
+        <input type="email" id="email" required><br>
+
+        <button id="add-client-button" onclick="addClient()">Aggiungi Cliente</button>
+    </div>
+
+    <!-- Barra di ricerca per filtrare i clienti -->
+    <div id="search-container">
+        <input type="text" id="search-input" placeholder="Cerca cliente per nome o email">
+        <button id="search-button">🔍</button>
+    </div>
+
+    <!-- Riquadro per visualizzare il codice RFID scansionato -->
+    <div id="rfid-scan-display" style="border: 2px solid #000000; padding: 10px; margin-bottom: 10px; width: 300px; border-radius: 10px;">
+        <h3>Codice RFID Scansionato</h3>
+        <p id="scanned-rfid" style="font-size: 18px; font-weight: bold;">Nessun badge scansionato</p>
+        <!-- Pulsante per associare il badge RFID scansionato -->
+        <button id="associate-rfid-button" onclick="associateScannedRFID()" style="margin-top: 10px;">Associa Badge Scansionato</button>
+    </div>
+
+    <!-- Modulo per aggiungere/rimuovere crediti -->
+    <div id="credit-form" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #ccc; padding: 20px; background-color: #fff; z-index: 1000;">
+        <h3 id="credit-form-title">Gestione Crediti</h3> <!-- Aggiunto id per il titolo -->
+        <label for="credit-amount">Quantità crediti:</label>
+        <input type="number" id="credit-amount" placeholder="Inserisci la quantità di crediti" required>
+        <h4>REFORMER</h4>
+        <button class="add-credit-button" id="add-credit-reformer">➕ Aggiungi Crediti</button>
+        <button class="remove-credit-button" id="remove-credit-reformer">➖ Rimuovi Crediti</button>
+        <h4>MAT</h4>
+        <button class="add-credit-button" id="add-credit-mat">➕ Aggiungi Crediti</button>
+        <button class="remove-credit-button" id="remove-credit-mat">➖ Rimuovi Crediti</button>
+        <h4>PSM</h4>
+        <button class="add-credit-button" id="add-credit-psm">➕ Aggiungi Crediti</button>
+        <button class="remove-credit-button" id="remove-credit-psm">➖ Rimuovi Crediti</button>
+    </div>
+
+    <!-- Lista clienti -->
+    <div id="client-list"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

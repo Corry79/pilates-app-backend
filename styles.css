@@ -1,0 +1,266 @@
+body {
+    font-family: sans-serif;
+    font-style: oblique;
+    margin: 30px;
+    padding: 0;
+
+    background: url('top-view-yoga-essential-items.jpg') no-repeat center top;
+    background-size: contain; /* Fa sì che l'immagine copra tutto lo schermo */
+    background-attachment: fixed; /* Mantiene l'immagine fissa durante lo scroll */
+    background-color: hsl(346, 48%, 77%); /* Mantiene il colore di sfondo in caso di schermi molto grandi */
+}
+
+/* Effetto sfumatura animata per il titolo */
+h1 {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 3rem;
+    font-weight: bold;
+    background: linear-gradient(90deg, hsl(0, 100%, 50%), hsl(200, 100%, 50%), hsl(100, 100%, 50%));
+    background-size: 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradient-animation 3s infinite;
+}
+
+/* Animazione per la sfumatura */
+@keyframes gradient-animation {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Aggiungi spazio tra le etichette e i campi di input */
+label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Stili per gli input (Nome, Email) */
+input {
+    width: 30%;
+    padding: 8px;
+    margin-bottom: 15px; /* Distanza tra i campi */
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.668);
+    border: 1px solid #ccc; /* Bordo grigio per gli input */
+}
+/* Sezione dei clienti */
+#client-list {
+    margin: 20px;
+}
+
+/* Stile per le card dei clienti */
+.client-card {
+    background-color: #fff;
+    padding: 15px;
+    margin: 10px auto;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 30%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.668);
+    text-align: center;
+}
+
+.client-card h2 {
+    margin: 0;
+    color: #333;
+}
+
+.client-card p {
+    color: #555;
+}
+.client-card p strong {
+    font-weight: bold;
+    color: #000; /* Nero per maggiore visibilità, opzionale */
+}
+
+/* Pulsante per eliminare un cliente */
+.delete-button {
+    background-color: #ff0000; /* Rosso per il pulsante di eliminazione */
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 10px;
+    border-radius: 5px;
+}
+
+.delete-button:hover {
+    background-color: darkred;
+}
+
+/* Pulsante per rimuovere crediti */
+.remove-credit-button {
+    background-color: #ff0000; /* Rosso per il pulsante di rimozione crediti */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.remove-credit-button:hover {
+    background-color: darkred;
+}
+
+/* Pulsante per aggiungere crediti */
+.add-credit-button {
+    background-color: hsl(123, 56%, 40%); /* Verde per il pulsante di aggiunta crediti */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.add-credit-button:hover {
+    background-color: hsl(123, 56%, 30%);
+}
+
+/* Pulsante per associare RFID */
+.associate-rfid-button {
+    background-color: hsl(200, 70%, 50%); /* Blu per il pulsante di associazione RFID */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.associate-rfid-button:hover {
+    background-color: hsl(200, 70%, 40%);
+}
+
+/* Pulsante per eliminare RFID */
+.remove-rfid-button {
+    background-color: #ff4500; /* Arancione per il pulsante di eliminazione RFID */
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.remove-rfid-button:hover {
+    background-color: #cc3700; /* Colore più scuro al passaggio del mouse */
+}
+
+/* Modulo per l'inserimento crediti */
+#credit-form {
+    position: fixed; /* Fissa il modulo nella finestra */
+
+   /* z-index: 1000; /* Assicurati che sia sopra gli altri elementi */
+    border: 1px solid #ccc;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.668); /* Aggiungi un'ombra */
+    border-radius: 10px; /* Angoli arrotondati */
+    margin-left: 30%;
+    margin-top: -5%;
+}
+
+#credit-form button {
+    width: auto; /* Mantieni il pulsante al suo naturale width */
+}
+
+/* Stile per il campo di input della quantità di crediti */
+#credit-amount {
+    width: 75%; /* Aumenta la larghezza del campo */
+    font-size: 16px; /* Aumenta la dimensione del testo */
+    padding: 15px; /* Aggiungi più spazio interno */
+    border: 1px solid #ccc; /* Bordo grigio */
+    border-radius: 5px; /* Angoli arrotondati */
+    box-shadow: 0 2px 5px rgb(0, 0, 0); /* Aggiungi un'ombra leggera */
+}
+
+/* Pulsante per aggiungere un cliente */
+#add-client-button {
+    background-color: hsl(123, 56%, 40%); /* Verde */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+#add-client-button:hover {
+    background-color: hsl(123, 56%, 30%); /* Verde più scuro al passaggio del mouse */
+}
+
+/* Pulsante per aggiungere crediti nella tabella del cliente */
+.client-card button[onclick^="showAddCreditForm"] {
+    background-color: hsl(123, 56%, 40%); /* Verde */
+    color: white;
+    border: none;
+    padding: 5px 5px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.client-card button[onclick^="showAddCreditForm"]:hover {
+    background-color: hsl(123, 56%, 30%); /* Verde più scuro al passaggio del mouse */
+}
+
+/* Pulsante per associare RFID */
+.client-card button[onclick^="associateRFIDPrompt"] {
+    background-color: hsl(200, 70%, 50%); /* Celeste */
+    color: white;
+    border: none;
+    padding: 5px 5px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.client-card button[onclick^="associateRFIDPrompt"]:hover {
+    background-color: hsl(200, 70%, 40%); /* Celeste più scuro al passaggio del mouse */
+}
+
+/* Pulsante per selezionare un cliente */
+.select-client-button {
+    background-color: #ffffffa7; /* Bianco */
+    color: #333; /* Testo scuro */
+    border: 2px solid #333; /* Bordo scuro */
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px; /* Spazio tra l'icona e il testo */
+}
+
+.select-client-button:hover {
+    background-color: #f0f0f0; /* Grigio chiaro al passaggio del mouse */
+}
+
+.select-client-button.selected {
+    background-color: #00fd09; /* Verde per lo stato selezionato */
+    color: white;
+    border-color: #00ff08;
+}
+
+.select-client-button .checkmark {
+    display: none; /* Nascondi la spunta per impostazione predefinita */
+    font-size: 18px;
+}
+
+.select-client-button.selected .checkmark {
+    display: inline; /* Mostra la spunta quando il pulsante è selezionato */
+}
