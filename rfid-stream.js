@@ -4,7 +4,7 @@ const router = express.Router();
 let clients = [];
 
 // Endpoint per lo streaming RFID
-router.get("/rfid-stream", (req, res) => {
+router.get("/api/rfid", (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
@@ -20,7 +20,7 @@ router.get("/rfid-stream", (req, res) => {
 });
 
 // Endpoint per ricevere il codice RFID dall'Arduino
-router.post("/rfid-stream", (req, res) => {
+router.post("/api/rfid", (req, res) => {
     const { rfidCode } = req.body;
 
     if (!rfidCode) {
