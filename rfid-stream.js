@@ -3,7 +3,7 @@ const router = express.Router();
 
 let clients = [];
 
-// Endpoint per lo streaming RFID
+// Endpoint per lo streaming RFID (SSE)
 router.get("/api/rfid", (req, res) => {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -12,8 +12,7 @@ router.get("/api/rfid", (req, res) => {
     clients.push(res);
 
     // Invia un messaggio di connessione iniziale
-    res.write("data: Connesso al server RFID\n\n");
-
+    res.write('event: status\ndata: Connesso al server RFID\n\n');
     req.on("close", () => {
         clients = clients.filter(client => client !== res);
     });
@@ -34,9 +33,9 @@ router.post("/api/rfid", (req, res) => {
 
 // Funzione per inviare il codice RFID a tutti i client connessi
 function broadcastRFID(rfidCode) {
-    console.log(`📡 Trasmettendo codice RFID: ${rfidCode}`); // Log per debug
+    console.log(`📡 Trasmettendo codice RFID: ${rfidCode}`);
     clients.forEach(client => {
-        client.write(`data: ${rfidCode}\n\n`); // Invia il codice RFID al frontend
+        client.write(`data: ${rfidCode}\n\n`);
     });
 }
 

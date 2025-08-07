@@ -38,7 +38,7 @@
 
     <!-- Modulo per aggiungere/rimuovere crediti -->
     <div id="credit-form" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #ccc; padding: 20px; background-color: #fff; z-index: 1000;">
-        <h3 id="credit-form-title">Gestione Crediti</h3> <!-- Aggiunto id per il titolo -->
+        <h3 id="credit-form-title">Gestione Crediti</h3>
         <label for="credit-amount">Quantità crediti:</label>
         <input type="number" id="credit-amount" placeholder="Inserisci la quantità di crediti" required>
         <h4>REFORMER</h4>
@@ -56,5 +56,40 @@
     <div id="client-list"></div>
 
     <script src="app.js"></script>
+
+    <!-- Script per ricevere in tempo reale i codici RFID -->
+    <script>
+    const eventSource = new EventSource("/api/rfid");
+
+    // Evento personalizzato per lo stato iniziale
+    eventSource.addEventListener("status", function (event) {
+        const scannedRfidElement = document.getElementById("scanned-rfid");
+        scannedRfidElement.textContent = event.data;
+        scannedRfidElement.style.color = "green";
+    });
+
+    // Evento per la ricezione del codice RFID
+    eventSource.onmessage = function (event) {
+        console.log("📡 Codice RFID ricevuto:", event.data);
+
+        const scannedRfidElement = document.getElementById("scanned-rfid");
+        scannedRfidElement.textContent = event.data;
+        scannedRfidElement.style.color = "blue";
+
+        // Evidenzia temporaneamente
+        scannedRfidElement.style.backgroundColor = "yellow";
+        setTimeout(() => {
+            scannedRfidElement.style.backgroundColor = "";
+            scannedRfidElement.style.color = "black";
+        }, 2000);
+    };
+
+    eventSource.onerror = function () {
+        console.error("❌ Errore nella connessione SSE");
+        const scannedRfidElement = document.getElementById("scanned-rfid");
+        scannedRfidElement.textContent = "Errore connessione RFID...";
+        scannedRfidElement.style.color = "red";
+    };
+    </script>
 </body>
 </html>

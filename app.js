@@ -261,7 +261,7 @@ async function removeRFID(clientId) {
 }
 
 function listenForRFID() {
-    const eventSource = new EventSource(`${API_BASE_URL}/rfid-stream`);
+    const eventSource = new EventSource(`${API_BASE_URL}/api/rfid`);
     eventSource.onmessage = function (event) {
         const rfidCode = event.data.trim();
         displayScannedRFID(rfidCode);

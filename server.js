@@ -295,9 +295,9 @@ app.use("/api/mobile", mobileAppRouter);
 
 // Porta del server
 const PORT = process.env.PORT || 5000;
-const Lesson = require("./models/lesson");
-const Booking = require("./models/booking");
-
+app.listen(PORT, () => {
+    console.log(`🚀 Server attivo su http://localhost:${PORT}`);
+});
 // ✅ Crea una nuova lezione
 app.post("/api/lessons", async (req, res) => {
     try {
@@ -395,6 +395,8 @@ app.delete("/api/bookings/:id", async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server attivo su http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server attivo su http://0.0.0.0:${PORT}`);
+    console.log(`🌐 Accessibile in LAN su: http://<IP_DEL_PC>:${PORT}`);
 });
+
