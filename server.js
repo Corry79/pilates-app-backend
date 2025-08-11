@@ -60,11 +60,11 @@ app.get("/api/clients/:id", async (req, res) => {
 // Aggiungi cliente
 app.post("/api/clients", async (req, res) => {
     try {
-        const { name, email, rfidUID } = req.body;
+        const { name, email, rfidUID, certificatoScadenza } = req.body;
         const existingClient = await Client.findOne({ email });
         if (existingClient) return res.status(400).json({ error: "Cliente già esistente!" });
 
-        const newClient = new Client({ name, email, rfidUID: rfidUID || null });
+        const newClient = new Client({ name, email, rfidUID: rfidUID || null, certificatoScadenza: certificatoScadenza || null });
         await newClient.save();
 
         res.status(201).json(newClient);
@@ -134,26 +134,25 @@ app.post("/api/clients/:id/remove-credits", async (req, res) => {
 
 // Aggiorna data di scadenza certificato di un cliente
 app.patch('/api/clients/:id/cert-expiry', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { certificatoScadenza } = req.body;
+    try {
+        const { id } = req.params;
+        const { certificatoScadenza } = req.body;
 
-    if (!certificatoScadenza) {
-      return res.status(400).json({ error: "Data di scadenza mancante" });
+        if (!certificatoScadenza) {
+            return res.status(400).json({ error: "Data di scadenza mancante" });
+        }
+
+        const client = await Client.findByIdAndUpdate(id, { certificatoScadenza }, { new: true });
+
+        if (!client) {
+            return res.status(404).json({ error: "Cliente non trovato" });
+        }
+
+        res.json(client);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
-
-    const client = await Client.findByIdAndUpdate(id, { certificatoScadenza }, { new: true });
-
-    if (!client) {
-      return res.status(404).json({ error: "Cliente non trovato" });
-    }
-
-    res.json(client);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
-
 
 // Elimina cliente
 app.delete("/api/clients/:id", async (req, res) => {
@@ -220,46 +219,26 @@ app.post("/api/clients/:id/reservations", async (req, res) => {
 
         res.status(201).json({ message: "Prenotazione aggiunta con successo", reservations: client.reservations });
     } catch (err) {
-        console.error("Errore nell'aggiunta della prenotazione:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.get("/api/clients/:id/reservations", async (req, res) => {
-    try {
-        const client = await Client.findById(req.params.id);
-        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
-        res.status(200).json(client.reservations);
-    } catch (err) {
-        console.error("Errore nel recupero delle prenotazioni:", err);
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.delete("/api/clients/:id/reservations/:reservationId", async (req, res) => {
-    try {
-        const client = await Client.findById(req.params.id);
-        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
-
-        client.reservations = client.reservations.filter(
-            (r) => r._id.toString() !== req.params.reservationId
-        );
-        await client.save();
-
-        res.status(200).json({ message: "Prenotazione cancellata con successo", reservations: client.reservations });
-    } catch (err) {
-        console.error("Errore nella cancellazione della prenotazione:", err);
+        console.error("Errore nella prenotazione:", err);
         res.status(500).json({ error: err.message });
     }
 });
 
 /** ROTTE LEZIONI **/
 
-// Crea nuova lezione
+app.get("/api/lessons", async (req, res) => {
+    try {
+        const lessons = await Lesson.find();
+        res.status(200).json(lessons);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Aggiungi lezione
 app.post("/api/lessons", async (req, res) => {
     try {
-        const { title, date, maxSeats, category } = req.body;
-        const lesson = new Lesson({ title, date, maxSeats, category, bookedSeats: 0 });
+        const lesson = new Lesson(req.body);
         await lesson.save();
         res.status(201).json(lesson);
     } catch (err) {
@@ -267,89 +246,65 @@ app.post("/api/lessons", async (req, res) => {
     }
 });
 
-// Lista lezioni
-app.get("/api/lessons", async (req, res) => {
+// Modifica lezione
+app.patch("/api/lessons/:id", async (req, res) => {
     try {
-        const lessons = await Lesson.find().sort({ date: 1 });
-        res.status(200).json(lessons);
+        const lesson = await Lesson.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!lesson) return res.status(404).json({ error: "Lezione non trovata" });
+        res.status(200).json(lesson);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(400).json({ error: err.message });
+    }
+});
+
+// Elimina lezione
+app.delete("/api/lessons/:id", async (req, res) => {
+    try {
+        const lesson = await Lesson.findByIdAndDelete(req.params.id);
+        if (!lesson) return res.status(404).json({ error: "Lezione non trovata" });
+        res.status(200).json({ message: "Lezione eliminata con successo" });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 
 /** ROTTE PRENOTAZIONI **/
 
-// Prenota lezione
+app.get("/api/bookings", async (req, res) => {
+    try {
+        const bookings = await Booking.find();
+        res.status(200).json(bookings);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post("/api/bookings", async (req, res) => {
     try {
-        const { clientId, lessonId } = req.body;
-
-        const client = await Client.findById(clientId);
-        const lesson = await Lesson.findById(lessonId);
-
-        if (!client || !lesson) return res.status(404).json({ error: "Cliente o lezione non trovati" });
-
-        if (lesson.bookedSeats >= lesson.maxSeats) return res.status(400).json({ error: "Nessun posto disponibile" });
-
-        // Verifica crediti
-        let walletField = "";
-        if (lesson.category === "Reformer") walletField = "walletReformer";
-        else if (lesson.category === "MAT") walletField = "walletMAT";
-        else if (lesson.category === "PSM") walletField = "walletPSM";
-
-        if ((client[walletField] || 0) <= 0) return res.status(400).json({ error: "Crediti insufficienti" });
-
-        // Scala credito e aggiorna posti
-        client[walletField] -= 1;
-        lesson.bookedSeats += 1;
-
-        await client.save();
-        await lesson.save();
-
-        const booking = new Booking({
-            client: client._id,
-            lesson: lesson._id,
-            date: lesson.date
-        });
+        const booking = new Booking(req.body);
         await booking.save();
-
-        res.status(201).json({ message: "Prenotazione confermata", booking });
+        res.status(201).json(booking);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(400).json({ error: err.message });
     }
 });
 
-// Annulla prenotazione
 app.delete("/api/bookings/:id", async (req, res) => {
     try {
-        const booking = await Booking.findById(req.params.id).populate("lesson").populate("client");
+        const booking = await Booking.findByIdAndDelete(req.params.id);
         if (!booking) return res.status(404).json({ error: "Prenotazione non trovata" });
-
-        let walletField = "";
-        if (booking.lesson.category === "Reformer") walletField = "walletReformer";
-        else if (booking.lesson.category === "MAT") walletField = "walletMAT";
-        else if (booking.lesson.category === "PSM") walletField = "walletPSM";
-
-        booking.client[walletField] += 1;
-        booking.lesson.bookedSeats -= 1;
-
-        await booking.client.save();
-        await booking.lesson.save();
-        await booking.deleteOne();
-
-        res.status(200).json({ message: "Prenotazione annullata" });
+        res.status(200).json({ message: "Prenotazione eliminata con successo" });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(400).json({ error: err.message });
     }
 });
 
-/** ALTRI ROUTER **/
+/** Router esterni **/
 
-app.use(rfidStreamRouter);
-app.use("/api/mobile", mobileAppRouter);
+app.use("/rfid-stream", rfidStreamRouter);
+app.use("/mobile-app", mobileAppRouter);
 
 // Avvio server
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server attivo su http://0.0.0.0:${PORT}`);
-    console.log(`🌐 Accessibile in LAN su: http://<IP_DEL_PC>:${PORT}`);
+app.listen(PORT, () => {
+    console.log(`🚀 Server in ascolto su http://localhost:${PORT}`);
 });

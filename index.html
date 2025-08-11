@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestione Clienti Pilates</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <h1>Gestione Clienti Pilates</h1>
@@ -14,20 +14,17 @@
         <h2>Aggiungi Cliente</h2>
 
         <label for="name">Nome: </label>
-        <input type="text" id="name" required /><br />
+        <input type="text" id="name" required><br>
 
         <label for="email">Email: </label>
-        <input type="email" id="email" required /><br />
-
-        <label for="cert-expiry">Scadenza Certificato Medico:</label>
-        <input type="date" id="cert-expiry" required /><br />
+        <input type="email" id="email" required><br>
 
         <button id="add-client-button" onclick="addClient()">Aggiungi Cliente</button>
     </div>
 
     <!-- Barra di ricerca per filtrare i clienti -->
     <div id="search-container">
-        <input type="text" id="search-input" placeholder="Cerca cliente per nome o email" />
+        <input type="text" id="search-input" placeholder="Cerca cliente per nome o email">
         <button id="search-button">🔍</button>
     </div>
 
@@ -43,7 +40,7 @@
     <div id="credit-form" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); border: 1px solid #ccc; padding: 20px; background-color: #fff; z-index: 1000;">
         <h3 id="credit-form-title">Gestione Crediti</h3>
         <label for="credit-amount">Quantità crediti:</label>
-        <input type="number" id="credit-amount" placeholder="Inserisci la quantità di crediti" required />
+        <input type="number" id="credit-amount" placeholder="Inserisci la quantità di crediti" required>
         <h4>REFORMER</h4>
         <button class="add-credit-button" id="add-credit-reformer">➕ Aggiungi Crediti</button>
         <button class="remove-credit-button" id="remove-credit-reformer">➖ Rimuovi Crediti</button>
@@ -55,128 +52,58 @@
         <button class="remove-credit-button" id="remove-credit-psm">➖ Rimuovi Crediti</button>
     </div>
 
-    <!-- Lista clienti: qui verranno caricati i clienti -->
+    <!-- Lista clienti -->
     <div id="client-list"></div>
 
     <script src="app.js"></script>
 
     <!-- Script per ricevere in tempo reale i codici RFID -->
     <script>
-        const eventSource = new EventSource("https://pilates-app-backend.onrender.com/api/rfid");
+  const eventSource = new EventSource("https://pilates-app-backend.onrender.com/");
 
-        let latestRFID = null;
 
-        eventSource.onmessage = function (event) {
-            const scannedRfidElement = document.getElementById("scanned-rfid");
-            const rfid = event.data.trim();
 
-            console.log("📡 Codice RFID ricevuto:", rfid);
+    let latestRFID = null;
 
-            // Ignora messaggio iniziale
-            if (rfid === "Connesso al server RFID") {
-                console.log("✅ Connessione stabilita");
-                return;
-            }
+    eventSource.onmessage = function (event) {
+        const scannedRfidElement = document.getElementById("scanned-rfid");
+        const rfid = event.data.trim();
 
-            latestRFID = rfid;
+        console.log("📡 Codice RFID ricevuto:", rfid);
 
-            scannedRfidElement.textContent = `🔐 Codice RFID: ${rfid}`;
-            scannedRfidElement.style.color = "blue";
+        // Ignora messaggio iniziale
+       if (rfid === "Connesso al server RFID") {
+    console.log("✅ Connessione stabilita");
+    return; // Non mostra nulla, oppure puoi mostrarlo altrove se vuoi
+}
 
-            scannedRfidElement.style.backgroundColor = "yellow";
-            setTimeout(() => {
-                scannedRfidElement.style.backgroundColor = "";
-                scannedRfidElement.style.color = "black";
-            }, 2000);
-        };
 
-        eventSource.onerror = function () {
-            console.error("❌ Errore nella connessione SSE con /api/rfid");
-            const scannedRfidElement = document.getElementById("scanned-rfid");
-            scannedRfidElement.textContent = "❌ Disconnesso dal server RFID";
-            scannedRfidElement.style.color = "red";
-        };
+        // Salva l'ultimo codice ricevuto (può servire per associare il cliente)
+        latestRFID = rfid;
 
-        window.getLatestRFID = function () {
-            return latestRFID;
-        };
+        // Mostra il codice RFID a schermo
+        scannedRfidElement.textContent = `🔐 Codice RFID: ${rfid}`;
+        scannedRfidElement.style.color = "blue";
 
-        // FUNZIONE PER CARICARE CLIENTI CON DATA DI SCADENZA MODIFICABILE
-        async function loadClients() {
-            const clientList = document.getElementById("client-list");
-            clientList.innerHTML = "Caricamento clienti...";
+        // Evidenzia per 2 secondi
+        scannedRfidElement.style.backgroundColor = "yellow";
+        setTimeout(() => {
+            scannedRfidElement.style.backgroundColor = "";
+            scannedRfidElement.style.color = "black";
+        }, 2000);
+    };
 
-            try {
-                const response = await fetch("https://pilates-app-backend.onrender.com/api/clients");
-                const clients = await response.json();
+    eventSource.onerror = function () {
+        console.error("❌ Errore nella connessione SSE con /api/rfid");
+        const scannedRfidElement = document.getElementById("scanned-rfid");
+        scannedRfidElement.textContent = "❌ Disconnesso dal server RFID";
+        scannedRfidElement.style.color = "red";
+    };
 
-                if (!Array.isArray(clients)) {
-                    clientList.innerHTML = "Errore nel caricamento clienti";
-                    return;
-                }
-
-                clientList.innerHTML = "";
-
-                clients.forEach(client => {
-                    // formato data YYYY-MM-DD per input date
-                    const certExpiryDate = client.certificatoScadenza
-                        ? client.certificatoScadenza.split("T")[0]
-                        : "";
-
-                    const clientDiv = document.createElement("div");
-                    clientDiv.classList.add("client");
-
-                    clientDiv.innerHTML = `
-                        <h3>${client.name}</h3>
-                        <p>Email: ${client.email}</p>
-                        <p>
-                            Scadenza Certificato:
-                            <input type="date" id="cert-expiry-${client._id}" value="${certExpiryDate}" />
-                            <button onclick="updateCertExpiry('${client._id}')">Aggiorna</button>
-                        </p>
-                    `;
-
-                    clientList.appendChild(clientDiv);
-                });
-            } catch (error) {
-                clientList.innerHTML = "Errore nel caricamento clienti";
-                console.error(error);
-            }
-        }
-
-        async function updateCertExpiry(clientId) {
-            const input = document.getElementById(`cert-expiry-${clientId}`);
-            const newDate = input.value;
-
-            if (!newDate) {
-                alert("Inserisci una data valida");
-                return;
-            }
-
-            try {
-                const response = await fetch(`https://pilates-app-backend.onrender.com/api/clients/${clientId}/cert-expiry`, {
-                    method: "PATCH",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ certificatoScadenza: newDate }),
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert("Data di scadenza aggiornata con successo!");
-                    loadClients();
-                } else {
-                    alert("Errore: " + data.error);
-                }
-            } catch (error) {
-                alert("Errore nella richiesta: " + error.message);
-            }
-        }
-
-        // Carica clienti all'apertura pagina
-        loadClients();
+    // Rendi disponibile il codice RFID anche ad altre funzioni
+    window.getLatestRFID = function () {
+        return latestRFID;
+    };
     </script>
 </body>
 </html>
