@@ -63,7 +63,8 @@ async function loadClients() {
             clientDiv.innerHTML = `
                 <h2>${client.name}</h2>
                 <p>Email: ${client.email}</p>
-                <p>Scadenza Certificato: <strong>${client.certExpiry ? new Date(client.certExpiry).toLocaleDateString() : 'Non specificata'}</strong></p>
+                <p>Scadenza Certificato: <strong>${client.certificatoScadenza ? new Date(client.certificatoScadenza).toLocaleDateString() : 'Non specificata'}</strong></p>
+
 
                 <p>Saldo Reformer: <strong>${client.walletReformer || 0}</strong> crediti</p>
                 <p>Saldo MAT: <strong>${client.walletMAT || 0}</strong> crediti</p>
