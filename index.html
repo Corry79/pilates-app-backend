@@ -59,24 +59,32 @@
 
     <!-- Script per ricevere in tempo reale i codici RFID -->
     <script>
-    const eventSource = new EventSource("/api/rfid");
+   const eventSource = new EventSource("http://localhost:5000/api/rfid");
 
-    // Evento personalizzato per lo stato iniziale
-    eventSource.addEventListener("status", function (event) {
-        const scannedRfidElement = document.getElementById("scanned-rfid");
-        scannedRfidElement.textContent = event.data;
-        scannedRfidElement.style.color = "green";
-    });
 
-    // Evento per la ricezione del codice RFID
+    let latestRFID = null;
+
     eventSource.onmessage = function (event) {
-        console.log("📡 Codice RFID ricevuto:", event.data);
-
         const scannedRfidElement = document.getElementById("scanned-rfid");
-        scannedRfidElement.textContent = event.data;
+        const rfid = event.data.trim();
+
+        console.log("📡 Codice RFID ricevuto:", rfid);
+
+        // Ignora messaggio iniziale
+       if (rfid === "Connesso al server RFID") {
+    console.log("✅ Connessione stabilita");
+    return; // Non mostra nulla, oppure puoi mostrarlo altrove se vuoi
+}
+
+
+        // Salva l'ultimo codice ricevuto (può servire per associare il cliente)
+        latestRFID = rfid;
+
+        // Mostra il codice RFID a schermo
+        scannedRfidElement.textContent = `🔐 Codice RFID: ${rfid}`;
         scannedRfidElement.style.color = "blue";
 
-        // Evidenzia temporaneamente
+        // Evidenzia per 2 secondi
         scannedRfidElement.style.backgroundColor = "yellow";
         setTimeout(() => {
             scannedRfidElement.style.backgroundColor = "";
@@ -85,10 +93,15 @@
     };
 
     eventSource.onerror = function () {
-        console.error("❌ Errore nella connessione SSE");
+        console.error("❌ Errore nella connessione SSE con /api/rfid");
         const scannedRfidElement = document.getElementById("scanned-rfid");
-        scannedRfidElement.textContent = "Errore connessione RFID...";
+        scannedRfidElement.textContent = "❌ Disconnesso dal server RFID";
         scannedRfidElement.style.color = "red";
+    };
+
+    // Rendi disponibile il codice RFID anche ad altre funzioni
+    window.getLatestRFID = function () {
+        return latestRFID;
     };
     </script>
 </body>

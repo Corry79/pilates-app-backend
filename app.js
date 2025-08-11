@@ -273,8 +273,16 @@ function listenForRFID() {
 }
 
 function displayScannedRFID(rfidCode) {
-    console.log("📡 Codice RFID ricevuto:", rfidCode);
     const rfidDisplay = document.getElementById("scanned-rfid");
+
+    // Ignora il messaggio iniziale di connessione
+    if (rfidCode === "Connesso al server RFID") {
+        console.log("✅ Connessione al server RFID stabilita.");
+        return;
+    }
+
+    console.log("📡 Codice RFID ricevuto:", rfidCode);
+
     if (rfidDisplay) {
         rfidDisplay.textContent = rfidCode;
         rfidDisplay.style.color = "green";
@@ -282,6 +290,7 @@ function displayScannedRFID(rfidCode) {
         console.error("❌ Elemento HTML per il codice RFID non trovato.");
     }
 }
+
 
 async function associateScannedRFID() {
     if (!selectedClientId) {

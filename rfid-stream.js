@@ -5,16 +5,24 @@ let clients = [];
 
 // Endpoint per lo streaming RFID (SSE)
 router.get("/api/rfid", (req, res) => {
+    // Impostazioni dell'header per SSE
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
+    res.flushHeaders(); // Forza l'invio immediato degli headers
 
+    console.log("🟢 Nuovo client connesso al flusso RFID");
+
+    // Aggiunge il client alla lista
     clients.push(res);
 
-    // Invia un messaggio di connessione iniziale
-    res.write('event: status\ndata: Connesso al server RFID\n\n');
+    // Invia messaggio iniziale
+    res.write(`event: connection\ndata: Connesso al server RFID\n\n`);
+
+    // Rimuove il client in caso di disconnessione
     req.on("close", () => {
-        clients = clients.filter(client => client !== res);
+        console.log("🔴 Client disconnesso dal flusso RFID");
+        clients = clients.filter((client) => client !== res);
     });
 });
 
@@ -27,15 +35,17 @@ router.post("/api/rfid", (req, res) => {
     }
 
     console.log(`📡 Codice RFID ricevuto: ${rfidCode}`);
-    broadcastRFID(rfidCode); // Trasmetti il codice RFID ai client connessi
-    res.status(200).json({ message: "Codice RFID ricevuto e trasmesso" });
+
+    // Trasmette il codice a tutti i client SSE connessi
+    broadcastRFID(rfidCode);
+
+    return res.status(200).json({ message: "Codice RFID ricevuto e trasmesso" });
 });
 
-// Funzione per inviare il codice RFID a tutti i client connessi
+// Funzione per trasmettere il codice RFID a tutti i client connessi
 function broadcastRFID(rfidCode) {
-    console.log(`📡 Trasmettendo codice RFID: ${rfidCode}`);
-    clients.forEach(client => {
-        client.write(`data: ${rfidCode}\n\n`);
+    clients.forEach((client) => {
+       client.write(`data: ${rfidCode}\n\n`); // nessun "event: rfid"
     });
 }
 

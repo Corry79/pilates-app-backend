@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 require("dotenv").config(); // Per gestire la password in sicurezza
 const { router: rfidStreamRouter } = require("./rfid-stream");
 const mobileAppRouter = require("./mobile-app");
+const port = 5000;
 
 const app = express();
 app.use(cors());
