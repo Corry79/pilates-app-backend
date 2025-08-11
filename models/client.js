@@ -25,6 +25,7 @@ const clientSchema = new mongoose.Schema({
         sparse: true,  // Permette valori null senza violare il vincolo di unicità
         default: null  // Imposta il valore predefinito su null
     },
+    certificatoScadenza: { type: Date, default: null },
     transactions: [
         {
             type: {

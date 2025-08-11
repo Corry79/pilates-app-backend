@@ -10,13 +10,15 @@ let selectedClientId = null;
 async function addClient() {
     const name = document.getElementById("name").value;
     const email = document.getElementById("email").value;
+    const certExpiry = document.getElementById("cert-expiry").value;
 
-    if (!name || !email) {
-        alert("Per favore, inserisci sia il nome che l'email!");
+
+    if (!name || !email || !certExpiry) {
+        alert("Per favore, inserisci sia il nome che l'email e data di scadenza certificato!");
         return;
     }
 
-    const newClient = { name, email };
+    const newClient = { name, email, certExpiry };
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/clients`, {
@@ -61,6 +63,8 @@ async function loadClients() {
             clientDiv.innerHTML = `
                 <h2>${client.name}</h2>
                 <p>Email: ${client.email}</p>
+                <p>Scadenza Certificato: <strong>${client.certExpiry ? new Date(client.certExpiry).toLocaleDateString() : 'Non specificata'}</strong></p>
+
                 <p>Saldo Reformer: <strong>${client.walletReformer || 0}</strong> crediti</p>
                 <p>Saldo MAT: <strong>${client.walletMAT || 0}</strong> crediti</p>
                 <p>Saldo PSM: <strong>${client.walletPSM || 0}</strong> crediti</p>

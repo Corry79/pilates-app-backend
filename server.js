@@ -131,6 +131,28 @@ app.post("/api/clients/:id/remove-credits", async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+// Aggiorna la data di scadenza del certificato medico di un cliente
+app.put("/api/clients/:id/certificato-scadenza", async (req, res) => {
+    try {
+        const { certificatoScadenza } = req.body;
+        if (!certificatoScadenza) {
+            return res.status(400).json({ error: "Data di scadenza mancante" });
+        }
+
+        const client = await Client.findById(req.params.id);
+        if (!client) {
+            return res.status(404).json({ error: "Cliente non trovato" });
+        }
+
+        client.certificatoScadenza = new Date(certificatoScadenza);
+        await client.save();
+
+        res.status(200).json({ message: "Data di scadenza aggiornata con successo", client });
+    } catch (err) {
+        console.error("Errore nell'aggiornamento della scadenza del certificato:", err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 // Elimina cliente
 app.delete("/api/clients/:id", async (req, res) => {
