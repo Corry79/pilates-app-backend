@@ -1,34 +1,40 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 require("dotenv").config(); // Per gestire la password in sicurezza
+
+// Import modelli
+const Client = require("./models/client");
+const Lesson = require("./models/lesson");
+const Booking = require("./models/booking");
+
+// Import router esterni
 const { router: rfidStreamRouter } = require("./rfid-stream");
 const mobileAppRouter = require("./mobile-app");
-const port = 5000;
 
 const app = express();
-app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+const PORT = process.env.PORT || 5000;
 
-// Connessione al database MongoDB
+// Middleware
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Connessione a MongoDB Atlas
 const mongoURI = `mongodb+srv://corsimo:${process.env.DB_PASSWORD}@cluster0.rlmna.mongodb.net/test?retryWrites=true&w=majority`;
 
-mongoose
-    .connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => console.log("✅ Connesso a MongoDB Atlas"))
     .catch((err) => console.error("❌ Errore di connessione a MongoDB:", err));
 
-// Importa il modello Client
-const Client = require("./models/client");
-
-// Rotta di prova
+// Rotta di test base
 app.get("/api/test", (req, res) => {
     res.send("🚀 Server Pilates App Funziona!");
 });
 
-// Rotta per ottenere tutti i clienti
+/** ROTTE CLIENTI **/
+
+// Tutti i clienti
 app.get("/api/clients", async (req, res) => {
     try {
         const clients = await Client.find();
@@ -39,16 +45,11 @@ app.get("/api/clients", async (req, res) => {
     }
 });
 
-// Rotta per ottenere un singolo cliente
+// Cliente singolo
 app.get("/api/clients/:id", async (req, res) => {
     try {
-        const { id } = req.params;
-        const client = await Client.findById(id);
-
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
-
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
         res.status(200).json(client);
     } catch (err) {
         console.error("Errore nel recupero del cliente:", err);
@@ -56,23 +57,16 @@ app.get("/api/clients/:id", async (req, res) => {
     }
 });
 
-// Rotta per aggiungere un nuovo cliente
+// Aggiungi cliente
 app.post("/api/clients", async (req, res) => {
     try {
         const { name, email, rfidUID } = req.body;
-
         const existingClient = await Client.findOne({ email });
-        if (existingClient) {
-            return res.status(400).json({ error: "Cliente già esistente!" });
-        }
+        if (existingClient) return res.status(400).json({ error: "Cliente già esistente!" });
 
-        const newClient = new Client({
-            name,
-            email,
-            rfidUID: rfidUID || null,
-        });
-
+        const newClient = new Client({ name, email, rfidUID: rfidUID || null });
         await newClient.save();
+
         res.status(201).json(newClient);
     } catch (err) {
         console.error("Errore nell'aggiunta del cliente:", err);
@@ -80,30 +74,19 @@ app.post("/api/clients", async (req, res) => {
     }
 });
 
-// Rotta per aggiungere crediti a un cliente
+// Aggiungi crediti
 app.post("/api/clients/:id/add-credits", async (req, res) => {
     try {
-        const { id } = req.params;
         const { amount, category } = req.body;
+        if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: "L'importo deve essere > 0" });
 
-        if (isNaN(amount) || amount <= 0) {
-            return res.status(400).json({ error: "L'importo dei crediti deve essere maggiore di 0!" });
-        }
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
 
-        const client = await Client.findById(id);
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
-
-        if (category === "Reformer") {
-            client.walletReformer = (client.walletReformer || 0) + amount;
-        } else if (category === "MAT") {
-            client.walletMAT = (client.walletMAT || 0) + amount;
-        } else if (category === "PSM") {
-            client.walletPSM = (client.walletPSM || 0) + amount;
-        } else {
-            return res.status(400).json({ error: "Categoria non valida" });
-        }
+        if (category === "Reformer") client.walletReformer = (client.walletReformer || 0) + amount;
+        else if (category === "MAT") client.walletMAT = (client.walletMAT || 0) + amount;
+        else if (category === "PSM") client.walletPSM = (client.walletPSM || 0) + amount;
+        else return res.status(400).json({ error: "Categoria non valida" });
 
         client.transactions.push({
             type: "add",
@@ -120,30 +103,19 @@ app.post("/api/clients/:id/add-credits", async (req, res) => {
     }
 });
 
-// Rotta per rimuovere crediti a un cliente
+// Rimuovi crediti
 app.post("/api/clients/:id/remove-credits", async (req, res) => {
     try {
-        const { id } = req.params;
         const { amount, category } = req.body;
+        if (isNaN(amount) || amount <= 0) return res.status(400).json({ error: "L'importo deve essere > 0" });
 
-        if (isNaN(amount) || amount <= 0) {
-            return res.status(400).json({ error: "L'importo dei crediti deve essere maggiore di 0!" });
-        }
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
 
-        const client = await Client.findById(id);
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
-
-        if (category === "Reformer") {
-            client.walletReformer = Math.max((client.walletReformer || 0) - amount, 0);
-        } else if (category === "MAT") {
-            client.walletMAT = Math.max((client.walletMAT || 0) - amount, 0);
-        } else if (category === "PSM") {
-            client.walletPSM = Math.max((client.walletPSM || 0) - amount, 0);
-        } else {
-            return res.status(400).json({ error: "Categoria non valida" });
-        }
+        if (category === "Reformer") client.walletReformer = Math.max((client.walletReformer || 0) - amount, 0);
+        else if (category === "MAT") client.walletMAT = Math.max((client.walletMAT || 0) - amount, 0);
+        else if (category === "PSM") client.walletPSM = Math.max((client.walletPSM || 0) - amount, 0);
+        else return res.status(400).json({ error: "Categoria non valida" });
 
         client.transactions.push({
             type: "remove",
@@ -160,41 +132,30 @@ app.post("/api/clients/:id/remove-credits", async (req, res) => {
     }
 });
 
-// Rotta per eliminare un cliente
+// Elimina cliente
 app.delete("/api/clients/:id", async (req, res) => {
     try {
-        const { id } = req.params;
-        const client = await Client.findByIdAndDelete(id);
-
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
-
+        const client = await Client.findByIdAndDelete(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
         res.status(200).json({ message: "Cliente eliminato con successo!" });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }
 });
 
-// Rotta per associare un cliente a una scheda RFID
+// Associa RFID a cliente
 app.post("/api/clients/:id/rfid", async (req, res) => {
     try {
-        const { id } = req.params;
         const { rfidUID } = req.body;
-
-        if (!rfidUID) {
-            return res.status(400).json({ error: "Codice RFID mancante" });
-        }
+        if (!rfidUID) return res.status(400).json({ error: "Codice RFID mancante" });
 
         const existingClient = await Client.findOne({ rfidUID });
-        if (existingClient && existingClient._id.toString() !== id) {
+        if (existingClient && existingClient._id.toString() !== req.params.id) {
             return res.status(400).json({ error: "RFID già associato a un altro cliente" });
         }
 
-        const client = await Client.findById(id);
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
 
         client.rfidUID = rfidUID;
         await client.save();
@@ -206,15 +167,11 @@ app.post("/api/clients/:id/rfid", async (req, res) => {
     }
 });
 
-// Rotta per eliminare il codice RFID associato a un cliente
+// Elimina codice RFID da cliente
 app.delete("/api/clients/:id/rfid", async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const client = await Client.findById(id);
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
 
         client.rfidUID = null;
         await client.save();
@@ -226,20 +183,14 @@ app.delete("/api/clients/:id/rfid", async (req, res) => {
     }
 });
 
-// Rotte per le prenotazioni
+// Prenotazioni cliente
 app.post("/api/clients/:id/reservations", async (req, res) => {
     try {
-        const { id } = req.params;
         const { date, type } = req.body;
+        if (!date || !type) return res.status(400).json({ error: "Data e tipo obbligatori" });
 
-        if (!date || !type) {
-            return res.status(400).json({ error: "Data e tipo di lezione sono obbligatori" });
-        }
-
-        const client = await Client.findById(id);
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
 
         client.reservations.push({ date, type });
         await client.save();
@@ -253,13 +204,8 @@ app.post("/api/clients/:id/reservations", async (req, res) => {
 
 app.get("/api/clients/:id/reservations", async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const client = await Client.findById(id);
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
-
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
         res.status(200).json(client.reservations);
     } catch (err) {
         console.error("Errore nel recupero delle prenotazioni:", err);
@@ -269,15 +215,11 @@ app.get("/api/clients/:id/reservations", async (req, res) => {
 
 app.delete("/api/clients/:id/reservations/:reservationId", async (req, res) => {
     try {
-        const { id, reservationId } = req.params;
-
-        const client = await Client.findById(id);
-        if (!client) {
-            return res.status(404).json({ error: "Cliente non trovato" });
-        }
+        const client = await Client.findById(req.params.id);
+        if (!client) return res.status(404).json({ error: "Cliente non trovato" });
 
         client.reservations = client.reservations.filter(
-            (reservation) => reservation._id.toString() !== reservationId
+            (r) => r._id.toString() !== req.params.reservationId
         );
         await client.save();
 
@@ -288,22 +230,13 @@ app.delete("/api/clients/:id/reservations/:reservationId", async (req, res) => {
     }
 });
 
-// Aggiungi il router per lo streaming RFID
-app.use(rfidStreamRouter);
+/** ROTTE LEZIONI **/
 
-// Aggiungi il router per l'app mobile
-app.use("/api/mobile", mobileAppRouter);
-
-// Porta del server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`🚀 Server attivo su http://localhost:${PORT}`);
-});
-// ✅ Crea una nuova lezione
+// Crea nuova lezione
 app.post("/api/lessons", async (req, res) => {
     try {
         const { title, date, maxSeats, category } = req.body;
-        const lesson = new Lesson({ title, date, maxSeats, category });
+        const lesson = new Lesson({ title, date, maxSeats, category, bookedSeats: 0 });
         await lesson.save();
         res.status(201).json(lesson);
     } catch (err) {
@@ -311,7 +244,7 @@ app.post("/api/lessons", async (req, res) => {
     }
 });
 
-// 📅 Lista lezioni disponibili
+// Lista lezioni
 app.get("/api/lessons", async (req, res) => {
     try {
         const lessons = await Lesson.find().sort({ date: 1 });
@@ -321,7 +254,9 @@ app.get("/api/lessons", async (req, res) => {
     }
 });
 
-// 📌 Prenotare una lezione
+/** ROTTE PRENOTAZIONI **/
+
+// Prenota lezione
 app.post("/api/bookings", async (req, res) => {
     try {
         const { clientId, lessonId } = req.body;
@@ -329,30 +264,22 @@ app.post("/api/bookings", async (req, res) => {
         const client = await Client.findById(clientId);
         const lesson = await Lesson.findById(lessonId);
 
-        if (!client || !lesson) {
-            return res.status(404).json({ error: "Cliente o lezione non trovati" });
-        }
+        if (!client || !lesson) return res.status(404).json({ error: "Cliente o lezione non trovati" });
 
-        // Controllo posti disponibili
-        if (lesson.bookedSeats >= lesson.maxSeats) {
-            return res.status(400).json({ error: "Nessun posto disponibile" });
-        }
+        if (lesson.bookedSeats >= lesson.maxSeats) return res.status(400).json({ error: "Nessun posto disponibile" });
 
-        // Controllo crediti in base alla categoria
+        // Verifica crediti
         let walletField = "";
         if (lesson.category === "Reformer") walletField = "walletReformer";
-        if (lesson.category === "MAT") walletField = "walletMAT";
-        if (lesson.category === "PSM") walletField = "walletPSM";
+        else if (lesson.category === "MAT") walletField = "walletMAT";
+        else if (lesson.category === "PSM") walletField = "walletPSM";
 
-        if (client[walletField] <= 0) {
-            return res.status(400).json({ error: "Crediti insufficienti" });
-        }
+        if ((client[walletField] || 0) <= 0) return res.status(400).json({ error: "Crediti insufficienti" });
 
         // Scala credito e aggiorna posti
         client[walletField] -= 1;
         lesson.bookedSeats += 1;
 
-        // Salva tutto
         await client.save();
         await lesson.save();
 
@@ -369,19 +296,16 @@ app.post("/api/bookings", async (req, res) => {
     }
 });
 
-// ❌ Annullare prenotazione
+// Annulla prenotazione
 app.delete("/api/bookings/:id", async (req, res) => {
     try {
         const booking = await Booking.findById(req.params.id).populate("lesson").populate("client");
-        if (!booking) {
-            return res.status(404).json({ error: "Prenotazione non trovata" });
-        }
+        if (!booking) return res.status(404).json({ error: "Prenotazione non trovata" });
 
-        // Ridà il credito al cliente
         let walletField = "";
         if (booking.lesson.category === "Reformer") walletField = "walletReformer";
-        if (booking.lesson.category === "MAT") walletField = "walletMAT";
-        if (booking.lesson.category === "PSM") walletField = "walletPSM";
+        else if (booking.lesson.category === "MAT") walletField = "walletMAT";
+        else if (booking.lesson.category === "PSM") walletField = "walletPSM";
 
         booking.client[walletField] += 1;
         booking.lesson.bookedSeats -= 1;
@@ -396,8 +320,13 @@ app.delete("/api/bookings/:id", async (req, res) => {
     }
 });
 
+/** ALTRI ROUTER **/
+
+app.use(rfidStreamRouter);
+app.use("/api/mobile", mobileAppRouter);
+
+// Avvio server
 app.listen(PORT, "0.0.0.0", () => {
     console.log(`🚀 Server attivo su http://0.0.0.0:${PORT}`);
     console.log(`🌐 Accessibile in LAN su: http://<IP_DEL_PC>:${PORT}`);
 });
-
