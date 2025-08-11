@@ -59,7 +59,8 @@
 
     <!-- Script per ricevere in tempo reale i codici RFID -->
     <script>
-   const eventSource = new EventSource("http://192.168.188.23:5000/api/rfid");
+  const eventSource = new EventSource("https://tuo-server-render.onrender.com/api/rfid");
+
 
 
     let latestRFID = null;
