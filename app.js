@@ -18,7 +18,8 @@ async function addClient() {
         return;
     }
 
-    const newClient = { name, email, certExpiry };
+   const newClient = { name, email, certificatoScadenza: certExpiry };
+
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/clients`, {
